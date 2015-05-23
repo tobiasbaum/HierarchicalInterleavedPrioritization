@@ -22,27 +22,38 @@ import java.util.Map;
 
 public class AlgModel {
 
-	private final Map<String, Story> stories = new HashMap<>();
+	private final Map<String, RankingComponent> originElements = new HashMap<>();
 	private final Map<String, AlgRankingElement> elements = new HashMap<>();
+    private final BalancesService balancesService;
 
-	void register(AlgRankingElement e) {
+	public AlgModel(final BalancesService balancesService) {
+	    this.balancesService = balancesService;
+	}
+
+	void register(final AlgRankingElement e, final RankingComponent correspondingElement) {
+		assert e.getID().equals(correspondingElement.getID());
 		this.elements.put(e.getID(), e);
+		this.originElements.put(e.getID(), correspondingElement);
 	}
 
-	void registerMapping(Story story, AlgStory algStory) {
-		this.stories.put(algStory.getID(), story);
+	public Story getStory(final AlgStory algStory) {
+		return (Story) this.originElements.get(algStory.getID());
 	}
 
-	public Story getStory(AlgStory algStory) {
-		return this.stories.get(algStory.getID());
+	public RankingComponent getReverse(final AlgRankingElement algElement) {
+		return this.originElements.get(algElement.getID());
 	}
 
-	public boolean contains(String id) {
+	public boolean contains(final String id) {
 		return this.elements.containsKey(id);
 	}
 
-	public AlgRankingElement get(String id) {
+	public AlgRankingElement get(final String id) {
 		return this.elements.get(id);
 	}
+
+    public BalancesService getBalancesService() {
+        return this.balancesService;
+    }
 
 }

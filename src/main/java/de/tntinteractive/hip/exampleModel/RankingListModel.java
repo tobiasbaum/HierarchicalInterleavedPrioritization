@@ -18,29 +18,35 @@
 package de.tntinteractive.hip.exampleModel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import de.tntinteractive.hip.core.RankingElement;
+import de.tntinteractive.hip.core.RankingComponent;
 import de.tntinteractive.hip.core.RankingList;
 
 public class RankingListModel extends RankingList {
 
 	private final String id;
-	private final ArrayList<RankingElement> elements;
+	private final ArrayList<RankingComponent> elements;
 	private final Map<String, Integer> weights;
 	private final int defaultWeight;
+	private final Set<RankingList> fullyAfter = new HashSet<>();
+	private final int roundSize;
 
-	public RankingListModel(String listId, int defaultWeight) {
+	public RankingListModel(final String listId, final int defaultWeight, final int roundSize) {
 		assert defaultWeight >= 0 && defaultWeight <= 100;
 		this.id = listId;
 		this.elements = new ArrayList<>();
 		this.weights = new HashMap<>();
 		this.defaultWeight = defaultWeight;
+		this.roundSize = roundSize;
 	}
 
-	public void addElement(RankingElement element, Integer weight) {
+	public void addElement(final RankingComponent element, final Integer weight) {
 		assert weight == null || (weight >= 0 && weight <= 100);
 		this.elements.add(element);
 		if (weight != null) {
@@ -54,14 +60,28 @@ public class RankingListModel extends RankingList {
 	}
 
 	@Override
-	public List<? extends RankingElement> getElements() {
+	public List<? extends RankingComponent> getElements() {
 		return this.elements;
 	}
 
 	@Override
-	public int getWeightInPercent(RankingElement e) {
+	public int getWeightInPercent(final RankingComponent e) {
 		final Integer weight = this.weights.get(e.getID());
 		return weight == null ? this.defaultWeight : weight;
 	}
+
+	public void setFullyAfter(final RankingList list) {
+		this.fullyAfter .add(list);
+	}
+
+	@Override
+	public Collection<? extends RankingList> getFullyAfter() {
+		return this.fullyAfter;
+	}
+
+    @Override
+    public int getRoundSize() {
+        return this.roundSize;
+    }
 
 }

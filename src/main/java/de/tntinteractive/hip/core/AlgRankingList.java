@@ -17,23 +17,37 @@
 
 package de.tntinteractive.hip.core;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 
 public abstract class AlgRankingList extends AlgRankingElement {
 
-	private Fraction balance;
+	private final Set<AlgRankingList> fullyAfter;
 
-	public AlgRankingList(AlgModel algModel, String id) {
-		super(algModel, id);
-		this.balance = new Fraction(0, 1);
+	public AlgRankingList(final AlgModel algModel, final String id, final RankingComponent correspondingElement,
+			final Set<AlgRankingList> fullyAfter) {
+		super(algModel, id, correspondingElement);
+		this.fullyAfter = fullyAfter;
 	}
 
-	public AlgStory startNextStory(Fraction storyPointsForRound) {
+	public boolean shallBeFullyAfterOneOf(final Collection<AlgRankingList> entries) {
+		for (final AlgRankingList e : entries) {
+			if (this.fullyAfter.contains(e)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public AlgStory startNextStory() {
 		if (this.isEmpty()) {
 			//can only happen if there is no work left to do
 			return null;
 		}
 
-		final AlgStory story = this.getFirstFittingStory(storyPointsForRound);
+		final AlgStory story = this.getFirstFittingStory();
 		//TEST
 		System.out.println("chose for start " + story);
 		story.start();
@@ -50,22 +64,20 @@ public abstract class AlgRankingList extends AlgRankingElement {
 	 * get their way before lower ranked ones).
 	 * @pre !this.isEmpty()
 	 */
-	protected abstract AlgStory getFirstFittingStory(Fraction storyPointsForRound);
-
-	public void propagateCosts(Fraction costs) {
-		this.balance = this.balance.add(costs);
-		System.out.println("balance of " + this.getID() + " is now " + this.balance);
-		//TODO propagieren der Kosten nach oben (und korrektes aufteilen)
-	}
+	protected abstract AlgStory getFirstFittingStory();
 
 	public abstract void removeChild(AlgRankingElement toRemove);
 
-	public void subtractFromBalance(Fraction value) {
-		this.balance = this.balance.subtract(value);
-		System.out.println("balance of " + this.getID() + " is now " + this.balance);
-	}
+	/**
+	 * Returns the lists prefix which's weight sums up to 100 percent.
+	 * The returned map is ordered by relevance, and the values always sum up to 1 (aka 100%).
+	 */
+	public abstract Map<? extends AlgRankingElement, Fraction> determineRelevantPrefix();
 
-	public Fraction getBalance() {
-		return this.balance;
-	}
+	/**
+	 * Returns a number that characterizes how much this list wants the given story.
+	 * The number is between 1 (wants more than anything else) and 0 (does not want at all).
+	 */
+    public abstract Fraction getWantingDegree(final AlgStory story);
+
 }

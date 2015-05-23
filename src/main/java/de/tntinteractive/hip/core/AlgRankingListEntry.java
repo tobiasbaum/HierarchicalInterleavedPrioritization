@@ -17,6 +17,8 @@
 
 package de.tntinteractive.hip.core;
 
+import java.util.List;
+
 public class AlgRankingListEntry {
 
 	private final AlgRankingList item;

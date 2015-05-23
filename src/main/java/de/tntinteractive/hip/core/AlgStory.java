@@ -17,24 +17,42 @@
 
 package de.tntinteractive.hip.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class AlgStory extends AlgRankingElement {
 
 	private final Fraction storyPoints;
 
-	public AlgStory(AlgModel algModel, String id, Fraction storyPoints) {
-		super(algModel, id);
+	public AlgStory(
+	        final AlgModel algModel,
+	        final String id,
+	        final RankingComponent correspondingElement,
+	        final Fraction storyPoints) {
+		super(algModel, id, correspondingElement);
 		assert storyPoints != null;
 		this.storyPoints = storyPoints;
 	}
 
 	public void start() {
-		for (final AlgRankingList parent : this.getParents()) {
-			parent.propagateCosts(this.storyPoints);
-		}
+		this.adjustAncestorBalances();
 		this.removeFromAllParents();
 	}
 
-	public Fraction getStoryPoints() {
+	private void adjustAncestorBalances() {
+        final Set<AlgRankingListOfLists> listsWithStory = this.determineListsWithStory();
+        for (final AlgRankingListOfLists list : listsWithStory) {
+            list.adjustBalances(this);
+        }
+    }
+
+    private Set<AlgRankingListOfLists> determineListsWithStory() {
+        final Set<AlgRankingListOfLists> ret = new HashSet<>();
+        this.addListOfListsAncestors(ret);
+        return ret;
+    }
+
+    public Fraction getStoryPoints() {
 		return this.storyPoints;
 	}
 }

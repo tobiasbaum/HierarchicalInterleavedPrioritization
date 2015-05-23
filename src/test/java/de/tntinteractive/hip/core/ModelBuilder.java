@@ -25,21 +25,32 @@ import de.tntinteractive.hip.exampleModel.StoryModel;
 
 public class ModelBuilder {
 
-	public final class ListBuilder {
+	private static final int DEFAULT_ROUND_SIZE = 2;
+
+    public final class ListBuilder {
 
 		private final RankingListModel list;
 
-		private ListBuilder(RankingListModel list) {
+		private ListBuilder(final RankingListModel list) {
 			this.list = list;
 		}
 
-		public ListBuilder addElement(String string, int weight) {
+		public ListBuilder addElement(final String string, final int weight) {
 			this.list.addElement(ModelBuilder.this.getElementOrCreateStory(string), weight);
 			return this;
 		}
 
-		public ListBuilder addStory(String string, int storyPoints) {
-			this.list.addElement(ModelBuilder.this.getOrCreateStory(string, new Fraction(storyPoints, 1)), null);
+		public ListBuilder addStory(final String string, final int storyPoints) {
+			return this.addStory(string, new Fraction(storyPoints, 1));
+		}
+
+		public ListBuilder addStory(final String string, final Fraction storyPoints) {
+			this.list.addElement(ModelBuilder.this.getOrCreateStory(string, storyPoints), null);
+			return this;
+		}
+
+		public ListBuilder fullyAfter(final String otherList) {
+			this.list.setFullyAfter(ModelBuilder.this.getList(otherList));
 			return this;
 		}
 
@@ -49,11 +60,15 @@ public class ModelBuilder {
 
 	}
 
-	private final Map<String, RankingElement> elements = new HashMap<>();
+	private final Map<String, RankingComponent> elements = new HashMap<>();
 
-	public ModelBuilder addList(String listId, String... storiesOrListIDs) {
+    public ModelBuilder addList(final String listId, final String... storiesOrListIDs) {
+        return this.addList(listId, DEFAULT_ROUND_SIZE, storiesOrListIDs);
+    }
+
+	public ModelBuilder addList(final String listId, final int roundSize, final String... storiesOrListIDs) {
 		assert !this.elements.containsKey(listId);
-		final RankingListModel list = new RankingListModel(listId, 100);
+		final RankingListModel list = new RankingListModel(listId, 100, roundSize);
 		for (final String elementId : storiesOrListIDs) {
 			list.addElement(this.getElementOrCreateStory(elementId), null);
 		}
@@ -61,14 +76,14 @@ public class ModelBuilder {
 		return this;
 	}
 
-	private RankingElement getElementOrCreateStory(String id) {
+	private RankingComponent getElementOrCreateStory(final String id) {
 		if (!this.elements.containsKey(id)) {
 			this.elements.put(id, new StoryModel(id, Fraction.ONE));
 		}
 		return this.elements.get(id);
 	}
 
-	private StoryModel getOrCreateStory(String id, Fraction storyPoints) {
+	private StoryModel getOrCreateStory(final String id, final Fraction storyPoints) {
 		if (!this.elements.containsKey(id)) {
 			this.elements.put(id, new StoryModel(id, storyPoints));
 		}
@@ -76,13 +91,16 @@ public class ModelBuilder {
 		return (StoryModel) this.elements.get(id);
 	}
 
-	public RankingList getList(String listId) {
+	public RankingList getList(final String listId) {
 		return (RankingList) this.elements.get(listId);
 	}
 
-	public ListBuilder startList(String listId) {
-		this.addList(listId);
+	public ListBuilder startList(final String listId, final int roundSize) {
+		this.addList(listId, roundSize);
 		return new ListBuilder((RankingListModel) this.elements.get(listId));
 	}
 
+    public ListBuilder startList(final String listId) {
+        return this.startList(listId, 2);
+    }
 }

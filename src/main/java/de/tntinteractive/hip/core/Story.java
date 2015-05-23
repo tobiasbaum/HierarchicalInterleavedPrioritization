@@ -18,17 +18,16 @@
 package de.tntinteractive.hip.core;
 
 
-public abstract class Story extends RankingElement {
+public abstract class Story extends RankingComponent {
 
 	@Override
-	protected AlgStory toAlgModel(AlgModel algModel) {
+	protected AlgStory toAlgModel(final AlgModel algModel) {
 		if (algModel.contains(this.getID())) {
 			return (AlgStory) algModel.get(this.getID());
 		}
 
 		//TODO wenn gestartet, dann auslassen
-		final AlgStory algStory = new AlgStory(algModel, this.getID(), this.getStoryPoints());
-		algModel.registerMapping(this, algStory);
+		final AlgStory algStory = new AlgStory(algModel, this.getID(), this, this.getStoryPoints());
 		return algStory;
 	}
 

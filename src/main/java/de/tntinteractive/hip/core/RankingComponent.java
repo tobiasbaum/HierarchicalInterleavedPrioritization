@@ -17,12 +17,13 @@
 
 package de.tntinteractive.hip.core;
 
-public abstract class RankingData {
+/**
+ * A component of the ranking hierarchy. Can be either a ranking list, or a leaf (aka Story).
+ */
+public abstract class RankingComponent {
 
-	public abstract InMemoryRankingData copyInMemory();
+	public abstract String getID();
 
-	public abstract boolean isOpen(Story e);
-
-	public abstract int getListBalance(RankingList childList);
+	protected abstract AlgRankingElement toAlgModel(AlgModel algModel);
 
 }

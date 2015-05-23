@@ -19,6 +19,7 @@ package de.tntinteractive.hip.core;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public abstract class AlgRankingElement {
 
@@ -26,10 +27,10 @@ public abstract class AlgRankingElement {
 	private final String id;
 	private final List<AlgRankingList> parents = new ArrayList<>();
 
-	public AlgRankingElement(AlgModel algModel, String id) {
+	public AlgRankingElement(final AlgModel algModel, final String id, final RankingComponent correspondingElement) {
 		this.model = algModel;
 		this.id = id;
-		algModel.register(this);
+		algModel.register(this, correspondingElement);
 	}
 
 	public String getID() {
@@ -44,7 +45,7 @@ public abstract class AlgRankingElement {
 		return this.parents;
 	}
 
-	public void registerParent(AlgRankingList algRankingList) {
+	public void registerParent(final AlgRankingList algRankingList) {
 		this.parents.add(algRankingList);
 	}
 
@@ -53,6 +54,18 @@ public abstract class AlgRankingElement {
 			parent.removeChild(this);
 		}
 	}
+
+	/**
+	 * Determines all ancestors (including itself) that are a list of lists and adds them to the given buffer.
+	 */
+    protected final void addListOfListsAncestors(final Set<? super AlgRankingListOfLists> buffer) {
+        if (this instanceof AlgRankingListOfLists) {
+            buffer.add((AlgRankingListOfLists) this);
+        }
+        for (final AlgRankingList parent : this.getParents()) {
+            parent.addListOfListsAncestors(buffer);
+        }
+    }
 
 	@Override
 	public String toString() {

@@ -17,14 +17,22 @@
 
 package de.tntinteractive.hip.core;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class AlgRankingListOfStories extends AlgRankingList {
 
 	private final List<AlgStory> elements;
 
-	public AlgRankingListOfStories(AlgModel algModel, String id, List<AlgStory> children) {
-		super(algModel, id);
+	public AlgRankingListOfStories(
+			final AlgModel algModel,
+			final String id,
+			final RankingComponent correspondingElement,
+			final List<AlgStory> children,
+			final Set<AlgRankingList> fullyAfter) {
+		super(algModel, id, correspondingElement, fullyAfter);
 		assert !children.isEmpty();
 
 		this.elements = children;
@@ -39,16 +47,30 @@ public class AlgRankingListOfStories extends AlgRankingList {
 	}
 
 	@Override
-	protected AlgStory getFirstFittingStory(Fraction storyPointsForRound) {
+	protected AlgStory getFirstFittingStory() {
 		return this.elements.get(0);
 	}
 
 	@Override
-	public void removeChild(AlgRankingElement toRemove) {
+	public void removeChild(final AlgRankingElement toRemove) {
 		this.elements.remove(toRemove);
 		if (this.elements.isEmpty()) {
 			this.removeFromAllParents();
 		}
 	}
 
+    @Override
+    public Map<? extends AlgRankingElement, Fraction> determineRelevantPrefix() {
+        return Collections.singletonMap(this.elements.get(0), Fraction.ONE);
+    }
+
+    @Override
+    public Fraction getWantingDegree(final AlgStory story) {
+        final int index = this.elements.indexOf(story);
+        if (index >= 0) {
+            return new Fraction(this.elements.size() - index, this.elements.size());
+        } else {
+            return Fraction.ZERO;
+        }
+    }
 }

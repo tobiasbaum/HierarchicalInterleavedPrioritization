@@ -18,6 +18,7 @@
 package de.tntinteractive.hip.core;
 
 import java.math.BigInteger;
+import java.util.Collection;
 
 public class Fraction implements Comparable<Fraction> {
 
@@ -27,11 +28,11 @@ public class Fraction implements Comparable<Fraction> {
 	private final BigInteger numerator;
 	private final BigInteger denominator;
 
-	public Fraction(int numerator, int denominator) {
+	public Fraction(final int numerator, final int denominator) {
 		this(BigInteger.valueOf(numerator), BigInteger.valueOf(denominator));
 	}
 
-	public Fraction(BigInteger numerator, BigInteger denominator) {
+	public Fraction(final BigInteger numerator, final BigInteger denominator) {
 		BigInteger gcd = numerator.gcd(denominator);
 		if (denominator.signum() < 0) {
 			gcd = gcd.negate();
@@ -41,12 +42,12 @@ public class Fraction implements Comparable<Fraction> {
 	}
 
 	@Override
-	public int compareTo(Fraction f) {
+	public int compareTo(final Fraction f) {
 		return this.numerator.multiply(f.denominator).compareTo(f.numerator.multiply(this.denominator));
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (!(o instanceof Fraction)) {
 			return false;
 		}
@@ -64,26 +65,48 @@ public class Fraction implements Comparable<Fraction> {
 		return this.numerator + "/" + this.denominator;
 	}
 
-	public Fraction add(Fraction f) {
+	public Fraction add(final Fraction f) {
 		return new Fraction(
 				this.numerator.multiply(f.denominator).add(this.denominator.multiply(f.numerator)),
 				this.denominator.multiply(f.denominator));
 	}
 
-	public Fraction subtract(Fraction f) {
+	public Fraction subtract(final Fraction f) {
 		return new Fraction(
 				this.numerator.multiply(f.denominator).subtract(this.denominator.multiply(f.numerator)),
 				this.denominator.multiply(f.denominator));
 	}
 
-	public Fraction multiply(Fraction f) {
+	public Fraction multiply(final Fraction f) {
 		return new Fraction(
 				this.numerator.multiply(f.numerator),
 				this.denominator.multiply(f.denominator));
 	}
 
-	public static Fraction min(Fraction f1, Fraction f2) {
-		return f1.compareTo(f2) <= 0 ? f1 : f2;
-	}
+    public Fraction divide(final Fraction f) {
+        return new Fraction(
+                this.numerator.multiply(f.denominator),
+                this.denominator.multiply(f.numerator));
+    }
+
+    public int intValue() {
+        return this.numerator.divide(this.denominator).intValue();
+    }
+
+    public static Fraction min(final Fraction f1, final Fraction f2) {
+        return f1.compareTo(f2) <= 0 ? f1 : f2;
+    }
+
+    public static Fraction max(final Fraction f1, final Fraction f2) {
+        return f1.compareTo(f2) <= 0 ? f2 : f1;
+    }
+
+    public static Fraction sum(final Collection<Fraction> values) {
+        Fraction ret = Fraction.ZERO;
+        for (final Fraction f : values) {
+            ret = ret.add(f);
+        }
+        return ret;
+    }
 
 }

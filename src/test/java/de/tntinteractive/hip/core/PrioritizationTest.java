@@ -18,6 +18,7 @@
 package de.tntinteractive.hip.core;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
@@ -184,6 +185,7 @@ public class PrioritizationTest {
 			.addStory("S-1", 1)
 			.addStory("S-2", 1)
 			.addStory("S-3", 1)
+            .exclusionGroup("exc")
 			.endList()
 			.startList("l2")
 			.addStory("S-4", 1)
@@ -192,7 +194,7 @@ public class PrioritizationTest {
 			.addStory("S-5", 1)
 			.addStory("S-6", 1)
 			.addStory("S-7", 1)
-			.fullyAfter("l1")
+            .exclusionGroup("exc")
 			.endList()
 			.startList("lges")
 			.addElement("l1", 50)
@@ -246,12 +248,84 @@ public class PrioritizationTest {
 						"PSY-5",
 						"IM-4",
 						"IM-2",
-						"PSY-6",
-						"PSY-7",
 						"IM-3",
 						"IM-1",
-						"IM-5"));
+						"IM-5",
+						"PSY-6",
+				        "PSY-7"));
 	}
+
+    @Test
+    public void testWithEmptyLists() {
+        final RankingList model = new ModelBuilder()
+            .addList("l1", "S-1")
+            .addList("l2")
+            .addList("l31", "S-2", "S-3")
+            .addList("l32")
+            .addList("l33", "S-4")
+            .addList("l3", "l31", "l32", "l33")
+            .startList("lges")
+            .addElement("l3", 50)
+            .addElement("l2", 40)
+            .addElement("l1", 30)
+            .endList()
+            .getList("lges");
+        assertThat(model.calculateStoryRanking(new DummyBalancesService()),
+                isRanking(
+                        "S-2",
+                        "S-3",
+                        "S-1",
+                        "S-4"));
+    }
+
+    @Test
+    public void testMixingWithRealisticData() {
+        final RankingList model = new ModelBuilder()
+            .addList("l2")
+            .addList("l31", "S-2", "S-3")
+            .addList("l32")
+            .addList("l33", "S-4")
+            .addList("l3", "l31", "l32", "l33")
+
+            .addList("kritische Bugs")
+            .addList("Einzelthemen für Kunden")
+            .addList("unkritische Bugs")
+
+            .startList("Prio übergeordnet", 15)
+            .addElement("kritische Bugs", 100)
+            .addElement("Projekte", 60)
+            .addElement("Einzelthemen für Kunden", 10)
+            .addElement("Usability", 10)
+            .addElement("Impediments", 10)
+            .addElement("unkritische Bugs", 5)
+            .addElement("strategische Themen", 5)
+            .endList()
+            .getList("Prio übergeordnet");
+
+//        Prio übergeordnet
+//            kritische Bugs (100%; Zählerstand 0; 0 offene Einträge)
+//            Projekte (60%; Zählerstand 0)
+//                Projekt SPS Schweiz - Meilenstein 1 (40%; Zählerstand 0; 14 offene Einträge)
+//                Projekt VWFS (30%; Zählerstand 0; 16 offene Einträge)
+//                P2 für Ricoh (30%; Zählerstand 0; 5 offene Einträge)
+//                Storage-Sicherheit (50%; Zählerstand 0; 8 offene Einträge)
+//                Umstellung Otto - Meilenstein 1 (50%; Zählerstand 0; 0 offene Einträge)
+//                Maschinenstatus-Reporting (BA) (50%; Zählerstand 0; 3 offene Einträge)
+//                Allianz offene Punkte (50%; Zählerstand 0; 8 offene Einträge)
+//                Projekt SPS Schweiz - Meilenstein 2 (50%; Zählerstand 0; 13 offene Einträge)
+//                Umstellung Otto - Meilenstein 2 (50%; Zählerstand 0; 4 offene Einträge)
+//                Rest BA (50%; Zählerstand 0; 2 offene Einträge)
+//                T-Systems (50%; Zählerstand 0; 49 offene Einträge)
+//                Commerzbank Rest (50%; Zählerstand 0; 18 offene Einträge)
+//                Umstellung KRZ Minden/Ravensberg/Lippe (50%; Zählerstand 0; 2 offene Einträge)
+//            Einzelthemen für Kunden (10%; Zählerstand 0; 0 offene Einträge)
+//            Usability/Qualitätsverbesserungen (10%; Zählerstand 0; 37 offene Einträge)
+//            Impediments (10%; Zählerstand 0; 82 offene Einträge)
+//            unkritische Bugs (5%; Zählerstand 0; 151 offene Einträge)
+//            strategische Themen (5%; Zählerstand 0)
+//                Staging (Guide) (100%; Zählerstand 0; 4 offene Einträge)
+
+    }
 
 	@Test
 	public void testGetRelevantPrefixOnlyOne() {
@@ -322,16 +396,19 @@ public class PrioritizationTest {
 			.endList()
 			.getList("lges");
 		assertThat(model.determineRelevantPrefix(),
-				isPrefixWithWeights("l3", "50", "l1", "50"));
+				isPrefixWithWeights("l3", "70", "l1", "30"));
 	}
 
     @Test
     public void testGetRelevantPrefixWithFullyAfter() {
         final RankingList model = new ModelBuilder()
-            .addList("l1", "S-1")
+            .startList("l1")
+            .addStory("S-1", 1)
+            .exclusionGroup("e1")
+            .endList()
             .startList("l2")
             .addStory("S-2", 1)
-            .fullyAfter("l1")
+            .exclusionGroup("e1")
             .endList()
             .startList("lges")
             .addElement("l1", 50)
@@ -342,4 +419,20 @@ public class PrioritizationTest {
                 isPrefixWithWeights("l1", "100"));
     }
 
+    @Test
+    public void testStart() {
+        final Story story = new ModelBuilder()
+            .addList("l1", "S-1", "S-2")
+            .addList("l2", "S-3")
+            .startList("lges")
+            .addElement("l1", 100)
+            .addElement("l2", 100)
+            .endList()
+            .getStory("S-2");
+        final TemporaryBalanceDecorator cache = new TemporaryBalanceDecorator(new DummyBalancesService());
+        story.start(cache);
+        assertThat(cache.getFor("l1").toStringWithoutZeroes(), is(""));
+        assertThat(cache.getFor("l2").toStringWithoutZeroes(), is(""));
+        assertThat(cache.getFor("lges").toStringWithoutZeroes(), is("l1;1\n"));
+    }
 }

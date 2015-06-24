@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class FractionTest {
 
-	private static Fraction f(int num, int den) {
+	private static Fraction f(final int num, final int den) {
 		return new Fraction(num, den);
 	}
 
@@ -70,4 +70,25 @@ public class FractionTest {
 		assertThat(f(3, 6).compareTo(f(3, 5)), lessThan(0));
 	}
 
+    @Test
+    public void testToString() {
+        assertThat(f(0, 1).toString(), is("0"));
+        assertThat(f(1, 1).toString(), is("1"));
+        assertThat(f(-1, 1).toString(), is("-1"));
+        assertThat(f(1, 2).toString(), is("1/2"));
+        assertThat(f(-1, 2).toString(), is("-1/2"));
+        assertThat(f(3, 2).toString(), is("1 1/2"));
+        assertThat(f(-3, 2).toString(), is("-1 1/2"));
+    }
+
+    @Test
+    public void testParse() {
+        assertThat(Fraction.parse("0"), is(f(0, 1)));
+        assertThat(Fraction.parse("1"), is(f(1, 1)));
+        assertThat(Fraction.parse("-1"), is(f(-1, 1)));
+        assertThat(Fraction.parse("1/2"), is(f(1, 2)));
+        assertThat(Fraction.parse("-1/2"), is(f(-1, 2)));
+        assertThat(Fraction.parse("1 1/2"), is(f(3, 2)));
+        assertThat(Fraction.parse("-1 1/2"), is(f(-3, 2)));
+    }
 }

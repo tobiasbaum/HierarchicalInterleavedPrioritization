@@ -17,15 +17,22 @@
 
 package de.tntinteractive.hip.exampleModel;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import de.tntinteractive.hip.core.FakeProxy;
 import de.tntinteractive.hip.core.Fraction;
+import de.tntinteractive.hip.core.Proxy;
+import de.tntinteractive.hip.core.RankingList;
 import de.tntinteractive.hip.core.Story;
 
 public class StoryModel extends Story {
 
 	private final String id;
 	private final Fraction storyPoints;
+    private final List<Proxy<? extends RankingList>> parents = new ArrayList<>();
 
-	public StoryModel(String storyId, Fraction storyPoints) {
+	public StoryModel(final String storyId, final Fraction storyPoints) {
 		assert storyPoints != null;
 		this.id = storyId;
 		this.storyPoints = storyPoints;
@@ -41,4 +48,12 @@ public class StoryModel extends Story {
 		return this.storyPoints;
 	}
 
+    @Override
+    public List<Proxy<? extends RankingList>> getParents() {
+        return this.parents;
+    }
+
+    public void addParentHelper(final RankingListModel t) {
+        this.parents.add(new FakeProxy<>(t, t.getID()));
+    }
 }

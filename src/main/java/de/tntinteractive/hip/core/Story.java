@@ -20,17 +20,14 @@ package de.tntinteractive.hip.core;
 
 public abstract class Story extends RankingComponent {
 
-	@Override
-	protected AlgStory toAlgModel(final AlgModel algModel) {
-		if (algModel.contains(this.getID())) {
-			return (AlgStory) algModel.get(this.getID());
-		}
-
-		//TODO wenn gestartet, dann auslassen
-		final AlgStory algStory = new AlgStory(algModel, this.getID(), this, this.getStoryPoints());
-		return algStory;
-	}
-
 	public abstract Fraction getStoryPoints();
 
+    /**
+     * Calculates the new balances that result from starting this story and saves them in the
+     * given {@link BalancesService}.
+     */
+    public final void start(final BalancesService balancesService) {
+        final AlgModel model = new AlgModel(balancesService);
+        new AlgProxy<AlgStory>(new FakeProxy<>(this, this.getID()), model).get().start();
+    }
 }

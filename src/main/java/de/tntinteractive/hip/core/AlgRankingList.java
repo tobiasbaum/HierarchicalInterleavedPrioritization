@@ -18,23 +18,22 @@
 package de.tntinteractive.hip.core;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 
 public abstract class AlgRankingList extends AlgRankingElement {
 
-	private final Set<AlgRankingList> fullyAfter;
+	private final String exclusionGroupId;
 
 	public AlgRankingList(final AlgModel algModel, final String id, final RankingComponent correspondingElement,
-			final Set<AlgRankingList> fullyAfter) {
-		super(algModel, id, correspondingElement);
-		this.fullyAfter = fullyAfter;
+	        final List<Proxy<AlgRankingList>> parents, final String exclusionGroupId) {
+		super(algModel, id, correspondingElement, parents);
+		this.exclusionGroupId = exclusionGroupId;
 	}
 
-	public boolean shallBeFullyAfterOneOf(final Collection<AlgRankingList> entries) {
-		for (final AlgRankingList e : entries) {
-			if (this.fullyAfter.contains(e)) {
+	public boolean isInSameExclusionGroupAsOneOf(final Collection<Proxy<AlgRankingList>> entries) {
+		for (final Proxy<AlgRankingList> e : entries) {
+			if (this.exclusionGroupId != null && this.exclusionGroupId.equals(e.get().exclusionGroupId)) {
 				return true;
 			}
 		}
@@ -47,12 +46,8 @@ public abstract class AlgRankingList extends AlgRankingElement {
 			return null;
 		}
 
-		final AlgStory story = this.getFirstFittingStory();
-		//TEST
-		System.out.println("chose for start " + story);
+		final AlgStory story = this.getFirstFittingStory().get();
 		story.start();
-		//TODO: Nach dem Start nochmal dafür sorgen, dass nicht alle am Anschlag sind (falls beim nächsten Aufruf
-		//  der relevantPrefix länger wird
 		return story;
 	}
 
@@ -64,20 +59,19 @@ public abstract class AlgRankingList extends AlgRankingElement {
 	 * get their way before lower ranked ones).
 	 * @pre !this.isEmpty()
 	 */
-	protected abstract AlgStory getFirstFittingStory();
+	protected abstract Proxy<AlgStory> getFirstFittingStory();
 
-	public abstract void removeChild(AlgRankingElement toRemove);
-
-	/**
-	 * Returns the lists prefix which's weight sums up to 100 percent.
-	 * The returned map is ordered by relevance, and the values always sum up to 1 (aka 100%).
-	 */
-	public abstract Map<? extends AlgRankingElement, Fraction> determineRelevantPrefix();
+	public abstract void removeChild(Proxy<AlgRankingElement> toRemove);
 
 	/**
 	 * Returns a number that characterizes how much this list wants the given story.
 	 * The number is between 1 (wants more than anything else) and 0 (does not want at all).
 	 */
-    public abstract Fraction getWantingDegree(final AlgStory story);
+    public abstract Fraction getWantingDegree(final Proxy<AlgStory> story);
+
+    /**
+     * Removes recursively all empty sublists (so that every remaining list ultimately contains at least one story).
+     */
+    public abstract void removeEmptyDescendants();
 
 }

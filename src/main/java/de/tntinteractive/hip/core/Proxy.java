@@ -17,30 +17,36 @@
 
 package de.tntinteractive.hip.core;
 
+/**
+ * A proxy to allow lazy loading of {@link RankingComponent}s.
+ *
+ * @param <E> Type of the component.
+ */
+public abstract class Proxy<E> {
 
-public class AlgRankingListEntry {
+    /**
+     * Returns the real component. Might load it lazily on first invocation.
+     */
+    public abstract E get();
 
-	private final Proxy<AlgRankingList> item;
-	private final Fraction weight;
+    public abstract String getID();
 
-	public AlgRankingListEntry(final Proxy<AlgRankingList> item, final Fraction weight) {
-		assert weight.compareTo(Fraction.ZERO) >= 0;
-		assert weight.compareTo(Fraction.ONE) <= 0;
-		this.item = item;
-		this.weight = weight;
-	}
+    @Override
+    public boolean equals(final Object o) {
+        if (!(o instanceof Proxy)) {
+            return false;
+        }
+        final Proxy<?> p = (Proxy<?>) o;
+        return this.getID().equals(p.getID());
+    }
 
-	public Proxy<AlgRankingList> getItem() {
-		return this.item;
-	}
+    @Override
+    public int hashCode() {
+        return this.getID().hashCode();
+    }
 
-	public Fraction getWeight() {
-		return this.weight;
-	}
-
-	@Override
-	public String toString() {
-		return this.item + "@" + this.weight.multiply(new Fraction(100, 1)) + "%";
-	}
-
+    @Override
+    public String toString() {
+        return this.getClass().getName() + " for " + this.getID();
+    }
 }

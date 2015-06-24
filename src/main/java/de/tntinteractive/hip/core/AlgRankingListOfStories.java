@@ -17,28 +17,22 @@
 
 package de.tntinteractive.hip.core;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class AlgRankingListOfStories extends AlgRankingList {
 
-	private final List<AlgStory> elements;
+	private final List<Proxy<AlgStory>> elements;
 
 	public AlgRankingListOfStories(
 			final AlgModel algModel,
 			final String id,
 			final RankingComponent correspondingElement,
-			final List<AlgStory> children,
-			final Set<AlgRankingList> fullyAfter) {
-		super(algModel, id, correspondingElement, fullyAfter);
-		assert !children.isEmpty();
+			final List<Proxy<AlgRankingList>> parents,
+			final List<Proxy<AlgStory>> children,
+			final String exclusionGroupId) {
+		super(algModel, id, correspondingElement, parents, exclusionGroupId);
 
 		this.elements = children;
-		for (final AlgStory e : children) {
-			e.registerParent(this);
-		}
 	}
 
 	@Override
@@ -47,12 +41,12 @@ public class AlgRankingListOfStories extends AlgRankingList {
 	}
 
 	@Override
-	protected AlgStory getFirstFittingStory() {
+	protected Proxy<AlgStory> getFirstFittingStory() {
 		return this.elements.get(0);
 	}
 
 	@Override
-	public void removeChild(final AlgRankingElement toRemove) {
+	public void removeChild(final Proxy<AlgRankingElement> toRemove) {
 		this.elements.remove(toRemove);
 		if (this.elements.isEmpty()) {
 			this.removeFromAllParents();
@@ -60,17 +54,17 @@ public class AlgRankingListOfStories extends AlgRankingList {
 	}
 
     @Override
-    public Map<? extends AlgRankingElement, Fraction> determineRelevantPrefix() {
-        return Collections.singletonMap(this.elements.get(0), Fraction.ONE);
-    }
-
-    @Override
-    public Fraction getWantingDegree(final AlgStory story) {
+    public Fraction getWantingDegree(final Proxy<AlgStory> story) {
         final int index = this.elements.indexOf(story);
         if (index >= 0) {
             return new Fraction(this.elements.size() - index, this.elements.size());
         } else {
             return Fraction.ZERO;
         }
+    }
+
+    @Override
+    public void removeEmptyDescendants() {
+        //hat keine Kinder, die leer sein könnten
     }
 }

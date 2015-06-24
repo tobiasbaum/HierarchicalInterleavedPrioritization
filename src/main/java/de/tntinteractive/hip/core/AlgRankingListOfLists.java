@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class AlgRankingListOfLists extends AlgRankingList {
 
@@ -35,17 +34,15 @@ public class AlgRankingListOfLists extends AlgRankingList {
             final AlgModel algModel,
             final String id,
             final RankingComponent correspondingElement,
+            final List<Proxy<AlgRankingList>> parents,
             final List<AlgRankingListEntry> children,
-            final Set<AlgRankingList> fullyAfter,
+            final String exclusionGroupId,
             final int roundSize,
             final BalancesService balancesService) {
-        super(algModel, id, correspondingElement, fullyAfter);
+        super(algModel, id, correspondingElement, parents, exclusionGroupId);
         assert !children.isEmpty();
 
         this.elements = children;
-        for (final AlgRankingListEntry e : children) {
-            e.getItem().registerParent(this);
-        }
         this.roundSize = new Fraction(roundSize, 1);
         this.balancesService = balancesService;
     }
@@ -56,24 +53,24 @@ public class AlgRankingListOfLists extends AlgRankingList {
     }
 
     @Override
-    protected AlgStory getFirstFittingStory() {
-        final Map<AlgRankingList, Fraction> relevantPrefix = this.determineRelevantPrefix();
+    protected Proxy<AlgStory> getFirstFittingStory() {
+        final Map<Proxy<AlgRankingList>, Fraction> relevantPrefix = this.determineRelevantPrefix();
         final Balances b = this.balancesService.getFor(this.getID());
         b.stripDown(relevantPrefix, this.roundSize);
-        for (final Entry<AlgRankingList, Fraction> e : relevantPrefix.entrySet()) {
+        for (final Entry<Proxy<AlgRankingList>, Fraction> e : relevantPrefix.entrySet()) {
             if (b.thereIsStillRoom(e, this.roundSize)) {
-                return e.getKey().getFirstFittingStory();
+                return e.getKey().get().getFirstFittingStory();
             }
         }
         throw new RuntimeException("should not happen");
     }
 
     @Override
-    public void removeChild(final AlgRankingElement toRemove) {
+    public void removeChild(final Proxy<AlgRankingElement> toRemove) {
         final Iterator<AlgRankingListEntry> iter = this.elements.iterator();
         while (iter.hasNext()) {
             final AlgRankingListEntry e = iter.next();
-            if (e.getItem() == toRemove) {
+            if (e.getItem().equals(toRemove)) {
                 iter.remove();
             }
         }
@@ -82,14 +79,20 @@ public class AlgRankingListOfLists extends AlgRankingList {
         }
     }
 
-    @Override
-    public Map<AlgRankingList, Fraction> determineRelevantPrefix() {
-        final Map<AlgRankingList, Fraction> ret = new LinkedHashMap<>();
+    /**
+     * Returns the lists prefix which's weight sums up to 100 percent.
+     * The returned map is ordered by relevance, and the values always sum up to 1 (aka 100%).
+     */
+    public Map<Proxy<AlgRankingList>, Fraction> determineRelevantPrefix() {
+        final Map<Proxy<AlgRankingList>, Fraction> ret = new LinkedHashMap<>();
         Fraction sum = Fraction.ZERO;
         final Iterator<AlgRankingListEntry> iter = this.elements.iterator();
         while (iter.hasNext() && sum.compareTo(Fraction.ONE) < 0) {
             final AlgRankingListEntry e = iter.next();
-            if (e.getItem().shallBeFullyAfterOneOf(ret.keySet())) {
+            if (e.getItem().get().isInSameExclusionGroupAsOneOf(ret.keySet())) {
+                continue;
+            }
+            if (e.getItem().get().isEmpty()) {
                 continue;
             }
             ret.put(e.getItem(), e.getWeight());
@@ -98,17 +101,23 @@ public class AlgRankingListOfLists extends AlgRankingList {
         return this.adjustLastWeight(ret);
     }
 
-    private Map<AlgRankingList, Fraction> adjustLastWeight(final Map<AlgRankingList, Fraction> ret) {
+    private Map<Proxy<AlgRankingList>, Fraction> adjustLastWeight(
+            final Map<Proxy<AlgRankingList>, Fraction> ret) {
         final Fraction sum = Fraction.sum(ret.values());
-        final AlgRankingList lastKey = this.determineLastKey(ret);
-        ret.put(lastKey, ret.get(lastKey).subtract(sum.subtract(Fraction.ONE)));
+        if (sum.compareTo(Fraction.ONE) > 0) {
+            final Proxy<AlgRankingList> lastKey = this.determineLastKey(ret);
+            ret.put(lastKey, ret.get(lastKey).subtract(sum.subtract(Fraction.ONE)));
+        } else {
+            final Proxy<AlgRankingList> firstKey = ret.keySet().iterator().next();
+            ret.put(firstKey, ret.get(firstKey).subtract(sum.subtract(Fraction.ONE)));
+        }
         return ret;
     }
 
-    private AlgRankingList determineLastKey(final Map<AlgRankingList, Fraction> ret) {
-        final Iterator<AlgRankingList> iter = ret.keySet().iterator();
+    private Proxy<AlgRankingList> determineLastKey(final Map<Proxy<AlgRankingList>, Fraction> ret) {
+        final Iterator<Proxy<AlgRankingList>> iter = ret.keySet().iterator();
         while (true) {
-            final AlgRankingList l = iter.next();
+            final Proxy<AlgRankingList> l = iter.next();
             if (!iter.hasNext()) {
                 return l;
             }
@@ -122,9 +131,9 @@ public class AlgRankingListOfLists extends AlgRankingList {
      * @pre The story is contained in at least one child list.
      */
     public void adjustBalances(final AlgStory story) {
-        final Map<AlgRankingList, Fraction> wanting = new HashMap<>();
+        final Map<Proxy<AlgRankingList>, Fraction> wanting = new HashMap<>();
         for (final AlgRankingListEntry e : this.elements) {
-            final Fraction wantingDegree = e.getItem().getWantingDegree(story);
+            final Fraction wantingDegree = e.getItem().get().getWantingDegree(new FakeProxy<>(story, story.getID()));
             if (!wantingDegree.equals(Fraction.ZERO)) {
                 wanting.put(e.getItem(), wantingDegree);
             }
@@ -132,7 +141,7 @@ public class AlgRankingListOfLists extends AlgRankingList {
 
         final Fraction sum = Fraction.sum(wanting.values());
         final Balances b = this.balancesService.getFor(this.getID()).copy();
-        for (final Entry<AlgRankingList, Fraction> wantingEntry : wanting.entrySet()) {
+        for (final Entry<Proxy<AlgRankingList>, Fraction> wantingEntry : wanting.entrySet()) {
             b.adjustBalance(
                     wantingEntry.getKey(),
                     wantingEntry.getValue().divide(sum).multiply(story.getStoryPoints()));
@@ -142,14 +151,26 @@ public class AlgRankingListOfLists extends AlgRankingList {
     }
 
     @Override
-    public Fraction getWantingDegree(final AlgStory story) {
+    public Fraction getWantingDegree(final Proxy<AlgStory> story) {
         //this could be much more sophisticated (e.g. taking the weights into account)
         Fraction max = Fraction.ZERO;
         for (int i = 0; i < this.elements.size(); i++) {
-            final Fraction curElementWantingDegree = this.elements.get(i).getItem().getWantingDegree(story);
+            final Fraction curElementWantingDegree = this.elements.get(i).getItem().get().getWantingDegree(story);
             final Fraction curUpperLimit = new Fraction(this.elements.size() - 1, this.elements.size());
             max = Fraction.max(max, Fraction.min(curElementWantingDegree, curUpperLimit));
         }
         return max;
+    }
+
+    @Override
+    public void removeEmptyDescendants() {
+        final Iterator<AlgRankingListEntry> iter = this.elements.iterator();
+        while (iter.hasNext()) {
+            final AlgRankingList e = iter.next().getItem().get();
+            e.removeEmptyDescendants();
+            if (e.isEmpty()) {
+                iter.remove();
+            }
+        }
     }
 }

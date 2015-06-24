@@ -49,8 +49,8 @@ public class ModelBuilder {
 			return this;
 		}
 
-		public ListBuilder fullyAfter(final String otherList) {
-			this.list.setFullyAfter(ModelBuilder.this.getList(otherList));
+		public ListBuilder exclusionGroup(final String groupName) {
+			this.list.setExclusionGroup(groupName);
 			return this;
 		}
 
@@ -94,6 +94,10 @@ public class ModelBuilder {
 	public RankingList getList(final String listId) {
 		return (RankingList) this.elements.get(listId);
 	}
+
+    public Story getStory(final String storyId) {
+        return (Story) this.elements.get(storyId);
+    }
 
 	public ListBuilder startList(final String listId, final int roundSize) {
 		this.addList(listId, roundSize);

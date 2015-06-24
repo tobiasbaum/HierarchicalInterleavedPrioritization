@@ -17,6 +17,8 @@
 
 package de.tntinteractive.hip.core;
 
+import java.util.List;
+
 /**
  * A component of the ranking hierarchy. Can be either a ranking list, or a leaf (aka Story).
  */
@@ -24,6 +26,10 @@ public abstract class RankingComponent {
 
 	public abstract String getID();
 
-	protected abstract AlgRankingElement toAlgModel(AlgModel algModel);
+	protected final AlgRankingElement toAlgModel(final AlgModel algModel) {
+	    return new AlgProxy<>(new FakeProxy<>(this, this.getID()), algModel).get();
+	}
+
+	public abstract List<Proxy<? extends RankingList>> getParents();
 
 }

@@ -17,7 +17,6 @@
 
 package de.tntinteractive.hip.core;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -25,11 +24,13 @@ public abstract class AlgRankingElement {
 
 	private final AlgModel model;
 	private final String id;
-	private final List<AlgRankingList> parents = new ArrayList<>();
+	private final List<Proxy<AlgRankingList>> parents;
 
-	public AlgRankingElement(final AlgModel algModel, final String id, final RankingComponent correspondingElement) {
+	public AlgRankingElement(final AlgModel algModel, final String id, final RankingComponent correspondingElement,
+	        final List<Proxy<AlgRankingList>> parents) {
 		this.model = algModel;
 		this.id = id;
+		this.parents = parents;
 		algModel.register(this, correspondingElement);
 	}
 
@@ -41,17 +42,13 @@ public abstract class AlgRankingElement {
 		return this.model;
 	}
 
-	public List<AlgRankingList> getParents() {
+	public List<Proxy<AlgRankingList>> getParents() {
 		return this.parents;
 	}
 
-	public void registerParent(final AlgRankingList algRankingList) {
-		this.parents.add(algRankingList);
-	}
-
 	public void removeFromAllParents() {
-		for (final AlgRankingList parent : this.getParents()) {
-			parent.removeChild(this);
+		for (final Proxy<AlgRankingList> parent : this.getParents()) {
+			parent.get().removeChild(new FakeProxy<AlgRankingElement>(this, this.getID()));
 		}
 	}
 
@@ -62,8 +59,8 @@ public abstract class AlgRankingElement {
         if (this instanceof AlgRankingListOfLists) {
             buffer.add((AlgRankingListOfLists) this);
         }
-        for (final AlgRankingList parent : this.getParents()) {
-            parent.addListOfListsAncestors(buffer);
+        for (final Proxy<AlgRankingList> parent : this.getParents()) {
+            parent.get().addListOfListsAncestors(buffer);
         }
     }
 

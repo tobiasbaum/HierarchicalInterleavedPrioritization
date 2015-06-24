@@ -17,30 +17,24 @@
 
 package de.tntinteractive.hip.core;
 
+public class FakeProxy<T> extends Proxy<T> {
 
-public class AlgRankingListEntry {
+    private final T t;
+    private final String id;
 
-	private final Proxy<AlgRankingList> item;
-	private final Fraction weight;
+    public FakeProxy(final T t, final String id) {
+        this.t = t;
+        this.id = id;
+    }
 
-	public AlgRankingListEntry(final Proxy<AlgRankingList> item, final Fraction weight) {
-		assert weight.compareTo(Fraction.ZERO) >= 0;
-		assert weight.compareTo(Fraction.ONE) <= 0;
-		this.item = item;
-		this.weight = weight;
-	}
+    @Override
+    public T get() {
+        return this.t;
+    }
 
-	public Proxy<AlgRankingList> getItem() {
-		return this.item;
-	}
-
-	public Fraction getWeight() {
-		return this.weight;
-	}
-
-	@Override
-	public String toString() {
-		return this.item + "@" + this.weight.multiply(new Fraction(100, 1)) + "%";
-	}
+    @Override
+    public String getID() {
+        return this.id;
+    }
 
 }

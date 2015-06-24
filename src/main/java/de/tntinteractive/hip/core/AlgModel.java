@@ -40,7 +40,7 @@ public class AlgModel {
 		return (Story) this.originElements.get(algStory.getID());
 	}
 
-	public RankingComponent getReverse(final AlgRankingElement algElement) {
+	public RankingComponent getReverse(final Proxy<? extends AlgRankingElement> algElement) {
 		return this.originElements.get(algElement.getID());
 	}
 
@@ -51,6 +51,17 @@ public class AlgModel {
 	public AlgRankingElement get(final String id) {
 		return this.elements.get(id);
 	}
+
+    public AlgRankingElement getAndCheckExistence(final String id) {
+        final AlgRankingElement element = this.get(id);
+        if (element == null) {
+            throw new RuntimeException(String.format(
+                    "Story %s is missing in model. Existing stories: %s",
+                    id,
+                    this.elements.keySet()));
+        }
+        return element;
+    }
 
     public BalancesService getBalancesService() {
         return this.balancesService;

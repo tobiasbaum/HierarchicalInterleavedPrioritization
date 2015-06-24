@@ -41,6 +41,22 @@ public class Fraction implements Comparable<Fraction> {
 		this.denominator = denominator.divide(gcd);
 	}
 
+	public static Fraction parse(final String s) {
+	    if (s.contains(" ")) {
+	        final String[] parts = s.split(" ");
+	        final BigInteger full = new BigInteger(parts[0]);
+	        final Fraction rest = parse(parts[1]);
+	        return new Fraction(full, BigInteger.ONE).add(rest.multiply(new Fraction(full.signum(), 1)));
+	    } else if (s.contains("/")) {
+            final String[] parts = s.split("/");
+            final BigInteger num = new BigInteger(parts[0]);
+            final BigInteger denom = new BigInteger(parts[1]);
+            return new Fraction(num, denom);
+	    } else {
+	        return new Fraction(new BigInteger(s), BigInteger.ONE);
+	    }
+	}
+
 	@Override
 	public int compareTo(final Fraction f) {
 		return this.numerator.multiply(f.denominator).compareTo(f.numerator.multiply(this.denominator));
@@ -62,7 +78,14 @@ public class Fraction implements Comparable<Fraction> {
 
 	@Override
 	public String toString() {
-		return this.numerator + "/" + this.denominator;
+	    final BigInteger[] divAndRem = this.numerator.divideAndRemainder(this.denominator);
+	    if (divAndRem[1].equals(BigInteger.ZERO)) {
+            return divAndRem[0].toString();
+	    } else if (divAndRem[0].equals(BigInteger.ZERO)) {
+            return divAndRem[1] + "/" + this.denominator;
+	    } else {
+	        return divAndRem[0] + " " + divAndRem[1].abs() + "/" + this.denominator;
+	    }
 	}
 
 	public Fraction add(final Fraction f) {

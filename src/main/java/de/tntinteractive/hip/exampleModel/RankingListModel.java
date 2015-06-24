@@ -18,24 +18,24 @@
 package de.tntinteractive.hip.exampleModel;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import de.tntinteractive.hip.core.FakeProxy;
+import de.tntinteractive.hip.core.Proxy;
 import de.tntinteractive.hip.core.RankingComponent;
 import de.tntinteractive.hip.core.RankingList;
 
 public class RankingListModel extends RankingList {
 
 	private final String id;
-	private final ArrayList<RankingComponent> elements;
+	private final ArrayList<Proxy<? extends RankingComponent>> elements;
 	private final Map<String, Integer> weights;
 	private final int defaultWeight;
-	private final Set<RankingList> fullyAfter = new HashSet<>();
 	private final int roundSize;
+    private String exclusionGroup;
+    private final List<Proxy<? extends RankingList>> parents = new ArrayList<>();
 
 	public RankingListModel(final String listId, final int defaultWeight, final int roundSize) {
 		assert defaultWeight >= 0 && defaultWeight <= 100;
@@ -48,9 +48,14 @@ public class RankingListModel extends RankingList {
 
 	public void addElement(final RankingComponent element, final Integer weight) {
 		assert weight == null || (weight >= 0 && weight <= 100);
-		this.elements.add(element);
+		this.elements.add(new FakeProxy<>(element, element.getID()));
 		if (weight != null) {
 			this.weights.put(element.getID(), weight);
+		}
+		if (element instanceof RankingList) {
+		    ((RankingListModel) element).addParentHelper(this);
+		} else {
+		    ((StoryModel) element).addParentHelper(this);
 		}
 	}
 
@@ -60,23 +65,32 @@ public class RankingListModel extends RankingList {
 	}
 
 	@Override
-	public List<? extends RankingComponent> getElements() {
+	public List<Proxy<? extends RankingComponent>> getElements() {
 		return this.elements;
 	}
 
+    @Override
+    public List<Proxy<? extends RankingList>> getParents() {
+        return this.parents;
+    }
+
+    public void addParentHelper(final RankingListModel t) {
+        this.parents.add(new FakeProxy<>(t, t.getID()));
+    }
+
 	@Override
-	public int getWeightInPercent(final RankingComponent e) {
-		final Integer weight = this.weights.get(e.getID());
+	public int getWeightInPercent(final String childId) {
+		final Integer weight = this.weights.get(childId);
 		return weight == null ? this.defaultWeight : weight;
 	}
 
-	public void setFullyAfter(final RankingList list) {
-		this.fullyAfter .add(list);
+	public void setExclusionGroup(final String e) {
+		this.exclusionGroup = e;
 	}
 
 	@Override
-	public Collection<? extends RankingList> getFullyAfter() {
-		return this.fullyAfter;
+	public String getExclusionGroup() {
+		return this.exclusionGroup;
 	}
 
     @Override

@@ -18,6 +18,7 @@
 package de.tntinteractive.hip.core;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class AlgStory extends AlgRankingElement {
@@ -28,8 +29,9 @@ public class AlgStory extends AlgRankingElement {
 	        final AlgModel algModel,
 	        final String id,
 	        final RankingComponent correspondingElement,
+	        final List<Proxy<AlgRankingList>> parents,
 	        final Fraction storyPoints) {
-		super(algModel, id, correspondingElement);
+		super(algModel, id, correspondingElement, parents);
 		assert storyPoints != null;
 		this.storyPoints = storyPoints;
 	}
